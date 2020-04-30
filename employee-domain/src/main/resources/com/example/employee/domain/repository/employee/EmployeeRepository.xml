@@ -1,0 +1,159 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
+    "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.example.employee.domain.repository.employee.EmployeeRepository">
+
+    <resultMap id="employeeResultMap" type="Employee">
+    	<id property="empid" column="emp_id" />
+        <result property="empname" column="emp_name" />
+        <result property="dob" column="dob" />
+        <result property="gender" column="gender" />
+        <result property="marstatus" column="marital_status" />
+        <result property="depart" column="depid" />
+        <result property="depname" column="dep_name" />
+        <result property="position" column="posid" />
+        <result property="posname" column="pos_name" />
+        <result property="jplevel" column="jp_level" />
+        <result property="jplevelname" column="lev_name" />
+        <result property="phone" column="phone" />
+        <result property="email" column="email" />
+        <result property="joindate" column="createDate" />
+    </resultMap>
+    
+    <sql id="WherePhrase">
+    	<if test="criteria.srcData != '' and criteria.srcData != null">
+    		<![CDATA[
+    		Where emp_id::varchar LIKE #{criteria.srcData} || '%' ESCAPE '~'
+    		OR emp_name LIKE #{criteria.srcData} || '%' 
+    		OR phone LIKE #{criteria.srcData} || '%'
+    		OR email LIKE #{criteria.srcData} || '%'
+    		]]>
+    	</if>
+  	</sql>
+  	
+  	<select id="countByCriteria" parameterType="SearchData" resultType="_long">
+        SELECT count(*)
+			FROM  (
+    			select *
+					from employee
+					<include refid="WherePhrase" />
+					Order by emp_id
+    		) sub;
+    </select>
+    
+    <select id="findPageByCriteria" resultMap="employeeResultMap">
+        select 
+			emp_id, 
+			emp_name, 
+			dob, 
+			gender, 
+			marital_status,
+			employee.dep_id As depid, 
+			dep_name,
+			employee.pos_id As posid, 
+			pos_name,
+			jp_level, 
+			lev_name, 
+			phone, 
+			email, 
+			createDate
+			from employee
+			left join department on employee.dep_id = department.dep_id
+			left join position on employee.pos_id = position.pos_id
+			left join japaneseskill on jp_level = lev_id
+			<include refid="WherePhrase" />
+			Order by emp_id
+			LIMIT
+            	#{pageable.pageSize}
+        	OFFSET
+            	#{pageable.offset};
+    </select>
+
+    <select id="findALL" parameterType="SearchData" resultMap="employeeResultMap">
+        select 
+			emp_id, 
+			emp_name, 
+			dob, 
+			gender, 
+			marital_status,
+			employee.dep_id As depid, 
+			dep_name,
+			employee.pos_id As posid, 
+			pos_name,
+			jp_level, 
+			lev_name, 
+			phone, 
+			email, 
+			createDate
+			from employee
+			left join department on employee.dep_id = department.dep_id
+			left join position on employee.pos_id = position.pos_id
+			left join japaneseskill on jp_level = lev_id
+			<include refid="WherePhrase" />
+			Order by emp_id;
+    </select>
+    
+    <select id="findByID" parameterType="String" resultMap="employeeResultMap">
+        select 
+			emp_id, 
+			emp_name, 
+			dob, 
+			gender, 
+			marital_status,
+			employee.dep_id As depid, 
+			dep_name,
+			employee.pos_id As posid, 
+			pos_name,
+			jp_level, 
+			lev_name, 
+			phone, 
+			email, 
+			createDate
+			from employee
+			left join department on employee.dep_id = department.dep_id
+			left join position on employee.pos_id = position.pos_id
+			left join japaneseskill on jp_level = lev_id
+			Where emp_id::varchar = #{srcData}
+			Order by emp_id;
+    </select>
+    
+	<insert id="create" parameterType="Employee">
+    <![CDATA[
+        INSERT INTO employee
+        ( 
+            emp_name, 
+            dob,
+            gender, 
+            marital_status, 
+            dep_id,
+            pos_id, 
+            jp_level, 
+            phone,
+            email, 
+            createDate
+        ) 
+        VALUES
+        ( 
+            #{empname}, 
+            TO_DATE(#{dob}, 'YYYY/MM/DD'),
+            #{gender}, 
+            #{marstatus}, 
+            #{depart}::INT,
+            #{position}::INT, 
+            #{jplevel}::INT, 
+            #{phone},
+            #{email}, 
+            TO_DATE(#{joindate}, 'YYYY/MM/DD')
+        )
+    ]]>
+    </insert>
+    
+    <delete id="deleteProc" parameterType="String">
+    <![CDATA[
+        DELETE FROM
+            employee
+        WHERE
+            emp_id::varchar = #{empID}
+    ]]>
+    </delete>
+</mapper>
